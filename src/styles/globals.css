@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#070a0f] text-slate-100 font-sans overflow-hidden select-none;
+  }
+}
+
+/* Glassmorphism custom styles */
+.glass-panel {
+  background: rgba(13, 19, 31, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 240, 255, 0.15);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 0 12px rgba(0, 240, 255, 0.05);
+}
+
+.glass-panel-glow {
+  background: rgba(13, 19, 31, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.2), inset 0 0 15px rgba(0, 240, 255, 0.1);
+}
+
+.glass-panel-red {
+  background: rgba(30, 10, 18, 0.8);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 42, 95, 0.35);
+  box-shadow: 0 0 20px rgba(255, 42, 95, 0.25);
+}
+
+/* HUD Text Gradients & Effects */
+.hud-text-glow {
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.6), 0 0 20px rgba(0, 240, 255, 0.3);
+}
+
+.hud-text-red-glow {
+  text-shadow: 0 0 10px rgba(255, 42, 95, 0.7), 0 0 20px rgba(255, 42, 95, 0.4);
+}
+
+.hud-text-amber-glow {
+  text-shadow: 0 0 10px rgba(255, 183, 0, 0.7);
+}
+
+/* Custom scrollbars for HUD panels */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(10, 15, 25, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 240, 255, 0.3);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 240, 255, 0.6);
+}
+
+/* Reduced Motion Mode Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
