@@ -10,6 +10,7 @@ import { getOptimizationHistory, saveOptimizationRun } from './controllers/optim
 import { getAuditEvents, createAuditEvent } from './controllers/auditController';
 import { submitCitizenReport } from './controllers/citizenReportController';
 
+import fs from 'fs';
 import path from 'path';
 
 dotenv.config();
@@ -44,8 +45,15 @@ app.post('/api/audit', createAuditEvent);
 
 app.post('/api/citizen-reports', submitCitizenReport);
 
-// Serve Frontend Static Files in Production (Render)
-const distPath = path.resolve(process.cwd(), 'dist');
+// Robust dist directory resolution for Render / Production
+const possibleDistPaths = [
+  path.resolve(__dirname, '../../dist'),
+  path.resolve(process.cwd(), 'dist'),
+  path.resolve(process.cwd(), '../dist')
+];
+
+const distPath = possibleDistPaths.find(p => fs.existsSync(p)) || possibleDistPaths[0];
+
 app.use(express.static(distPath));
 
 // Wildcard SPA Fallback to index.html
