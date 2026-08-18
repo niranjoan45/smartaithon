@@ -8,7 +8,7 @@ export function computeBaselineAllocation(
   incidents: NormalizedIncident[],
   resources: EmergencyUnit[]
 ): { assignments: ResourceAssignment[]; avgEta: number; totalEta: number } {
-  const availableResources = resources.filter(r => r.status === 'AVAILABLE' || r.status === 'DISPATCHED');
+  const availableResources = resources.filter(r => r.status !== 'UNAVAILABLE');
   const assignedResourceIds = new Set<string>();
   const assignments: ResourceAssignment[] = [];
 

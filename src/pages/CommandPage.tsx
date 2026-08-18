@@ -96,7 +96,7 @@ export function CommandPage() {
             <div className="bg-slate-100 p-2.5 rounded-lg border border-[#73852b]/50">
               <div className="text-slate-700 font-bold">DISPATCHED</div>
               <div className="text-base font-bold text-[#7a0517]">
-                {resources.filter(r => r.status === 'DISPATCHED').length} Units
+                {resources.filter(r => r.status === 'DISPATCHED' || r.status === 'BUSY').length} Units
               </div>
             </div>
             <div className="bg-slate-100 p-2.5 rounded-lg border border-[#73852b]/50">

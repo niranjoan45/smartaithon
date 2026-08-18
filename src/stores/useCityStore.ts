@@ -199,6 +199,51 @@ const initialResources: EmergencyUnit[] = [
     homeStation: 'Sector 4 Station',
     unitHealth: 100,
     driverName: 'Capt. Rodriguez'
+  },
+  {
+    id: 'P09',
+    callsign: 'POLICE P09',
+    type: 'POLICE',
+    status: 'AVAILABLE',
+    position3D: [-12, 0.5, 15],
+    latitude: 19.075,
+    longitude: 72.870,
+    capabilities: ['trafficControl', 'crowdControl', 'crimeResponse'],
+    speedKmH: 75,
+    availableAtTimestamp: Date.now(),
+    homeStation: 'Central Precinct',
+    unitHealth: 96,
+    driverName: 'Sgt. Davis'
+  },
+  {
+    id: 'A04',
+    callsign: 'AMBULANCE A04',
+    type: 'AMBULANCE',
+    status: 'AVAILABLE',
+    position3D: [18, 0.5, -10],
+    latitude: 19.090,
+    longitude: 72.890,
+    capabilities: ['basicLifeSupport', 'trauma'],
+    speedKmH: 70,
+    availableAtTimestamp: Date.now(),
+    homeStation: 'Eastside Station',
+    unitHealth: 99,
+    driverName: 'Paramedic Vance'
+  },
+  {
+    id: 'F02',
+    callsign: 'FIRE TRUCK F02',
+    type: 'FIRE_TRUCK',
+    status: 'AVAILABLE',
+    position3D: [-20, 0.5, 20],
+    latitude: 19.070,
+    longitude: 72.850,
+    capabilities: ['hazmat', 'structuralFire'],
+    speedKmH: 60,
+    availableAtTimestamp: Date.now(),
+    homeStation: 'Westside Firehouse',
+    unitHealth: 97,
+    driverName: 'Lieutenant Chang'
   }
 ];
 

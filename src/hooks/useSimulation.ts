@@ -11,6 +11,26 @@ export function useSimulation() {
 
       useCityStore.setState((state) => {
         const updatedResources = state.resources.map((resource) => {
+          // If resource is BUSY, tick on-scene completion timer and transition to AVAILABLE when done
+          if (resource.status === 'BUSY') {
+            const onSceneTicks = (resource as any)._onSceneTicks || 0;
+            if (onSceneTicks >= 20) {
+              return {
+                ...resource,
+                status: 'AVAILABLE' as const,
+                targetPosition3D: undefined,
+                targetPosition: undefined,
+                currentIncidentId: undefined,
+                etaMinutes: 0,
+                _onSceneTicks: 0
+              };
+            }
+            return {
+              ...resource,
+              _onSceneTicks: onSceneTicks + 1
+            };
+          }
+
           const target = resource.targetPosition3D || resource.targetPosition;
           const currentPos = resource.position3D || resource.position;
 
@@ -28,8 +48,9 @@ export function useSimulation() {
               ...resource,
               position3D: target,
               position: target,
-              etaMinutes: 0.5,
-              status: 'BUSY' as const
+              etaMinutes: 0,
+              status: 'BUSY' as const,
+              _onSceneTicks: 1
             };
           }
 

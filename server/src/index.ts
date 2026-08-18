@@ -10,6 +10,8 @@ import { getOptimizationHistory, saveOptimizationRun } from './controllers/optim
 import { getAuditEvents, createAuditEvent } from './controllers/auditController';
 import { submitCitizenReport } from './controllers/citizenReportController';
 
+import path from 'path';
+
 dotenv.config();
 
 const app = express();
@@ -41,6 +43,18 @@ app.get('/api/audit', getAuditEvents);
 app.post('/api/audit', createAuditEvent);
 
 app.post('/api/citizen-reports', submitCitizenReport);
+
+// Serve Frontend Static Files in Production (Render)
+const distPath = path.resolve(process.cwd(), 'dist');
+app.use(express.static(distPath));
+
+// Wildcard SPA Fallback to index.html
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ error: 'API route not found' });
+  }
+  res.sendFile(path.join(distPath, 'index.html'));
+});
 
 const server = app.listen(PORT, () => {
   console.log('===================================================');

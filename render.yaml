@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: ai-city-guardian
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm run server
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: NODE_ENV
+        value: production

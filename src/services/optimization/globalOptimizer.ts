@@ -10,7 +10,7 @@ export function runGlobalOptimization(
   resources: EmergencyUnit[]
 ): OptimizationResult {
   const startTime = Date.now();
-  const availableResources = resources.filter(r => r.status === 'AVAILABLE' || r.status === 'DISPATCHED');
+  const availableResources = resources.filter(r => r.status !== 'UNAVAILABLE');
   
   // Sort incidents by priority rank (P1 first, then high priority score)
   const prioritizedIncidents = [...incidents].sort((a, b) => {
