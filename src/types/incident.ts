@@ -60,6 +60,16 @@ export interface NormalizedIncident {
   assignedResourceId?: string;
   evidence: EvidenceItem[];
   aiReasoning: AIReasoningDetails;
+  mediaAttachments?: {
+    pictures?: string[];
+    videoUrl?: string;
+    audioUrl?: string;
+  };
+  gpsLocation?: {
+    latitude: number;
+    longitude: number;
+    accuracy?: number;
+  };
 }
 
 export interface RawEventInput {
@@ -68,6 +78,16 @@ export interface RawEventInput {
   reporterLocation?: string;
   timestamp?: number;
   coordinates?: [number, number, number];
+  mediaAttachments?: {
+    pictures?: string[];
+    videoUrl?: string;
+    audioUrl?: string;
+  };
+  gpsLocation?: {
+    latitude: number;
+    longitude: number;
+    accuracy?: number;
+  };
 }
 
 export interface IntelligencePipelineStage {

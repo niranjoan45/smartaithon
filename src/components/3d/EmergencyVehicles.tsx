@@ -50,26 +50,39 @@ interface SingleProps {
 }
 
 function SingleEmergencyVehicle({ resource, isSelected, onSelect }: SingleProps) {
-  const meshRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<THREE.Group>(null);
   const sirenRef = useRef<THREE.Mesh>(null);
 
-  const pos = resource.position3D || resource.position || [0, 0.5, 0];
+  const initialPos = resource.position3D || resource.position || [0, 0.5, 0];
+  const currentPos = useRef(new THREE.Vector3(...initialPos));
 
-  // Status & Body Colors STRICTLY RED PER USER DIRECTIVE
-  const statusColor = '#dc2626';
-  const bodyColor = '#dc2626';
-
-  useFrame((state) => {
+  useFrame((state, delta) => {
     // Siren Beacon Flashing Animation
     if (sirenRef.current) {
       const time = state.clock.getElapsedTime();
       (sirenRef.current.material as THREE.MeshBasicMaterial).opacity = (Math.sin(time * 12) + 1) / 2;
     }
+
+    // Smooth real-world movement towards target location when dispatched
+    if (resource.status === 'DISPATCHED' && resource.targetPosition3D && groupRef.current) {
+      const targetVec = new THREE.Vector3(
+        resource.targetPosition3D[0],
+        0.5,
+        resource.targetPosition3D[2]
+      );
+
+      if (currentPos.current.distanceTo(targetVec) > 0.5) {
+        currentPos.current.lerp(targetVec, THREE.MathUtils.clamp(delta * 1.5, 0.01, 0.1));
+        groupRef.current.position.copy(currentPos.current);
+        groupRef.current.lookAt(targetVec.x, 0.5, targetVec.z);
+      }
+    }
   });
 
   return (
     <group 
-      position={pos} 
+      ref={groupRef}
+      position={initialPos} 
       onClick={(e) => {
         e.stopPropagation();
         onSelect();
@@ -82,7 +95,7 @@ function SingleEmergencyVehicle({ resource, isSelected, onSelect }: SingleProps)
       </mesh>
 
       {/* Vehicle Geometry Body (STRICTLY RED) */}
-      <group ref={meshRef}>
+      <group>
         {/* Chassis */}
         <mesh position={[0, 0.6, 0]} castShadow>
           <boxGeometry args={resource.type === 'FIRE_TRUCK' ? [2.5, 1.2, 4.5] : [2.0, 1.0, 3.5]} />
@@ -103,7 +116,7 @@ function SingleEmergencyVehicle({ resource, isSelected, onSelect }: SingleProps)
       </group>
 
       {/* Floating 3D Callsign & Status Badge (RED) */}
-      <Html position={[0, 2.6, 0]} center distanceFactor={25}>
+      <Html position={[0, 2.6, 0]} center distanceFactor={25} zIndexRange={[10, 0]}>
         <div 
           onClick={(e) => {
             e.stopPropagation();

@@ -1,11 +1,19 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCityStore } from '../stores/useCityStore';
-import { AlertTriangle, ArrowRight, ShieldAlert, CheckCircle2, Clock } from 'lucide-react';
+import { useAuthStore } from '../stores/useAuthStore';
+import { AlertTriangle, ArrowRight, ShieldAlert, CheckCircle2, Clock, Zap, Check } from 'lucide-react';
 
 export function IncidentsPage() {
   const navigate = useNavigate();
-  const { normalizedIncidents, selectedIncidentId, selectIncident } = useCityStore();
+  const { user } = useAuthStore();
+  const { 
+    normalizedIncidents, 
+    selectedIncidentId, 
+    selectIncident,
+    solveAndDispatchIncidentAction,
+    resolveIncidentAction
+  } = useCityStore();
 
   const selectedIncident = normalizedIncidents.find(i => i.id === selectedIncidentId) || normalizedIncidents[0];
 
@@ -36,9 +44,8 @@ export function IncidentsPage() {
                 <th className="py-2.5 px-3">STATUS</th>
                 <th className="py-2.5 px-3">LOCATION</th>
                 <th className="py-2.5 px-3">AT RISK</th>
-                <th className="py-2.5 px-3">CONFIDENCE</th>
                 <th className="py-2.5 px-3">ASSIGNED</th>
-                <th className="py-2.5 px-3">ACTION</th>
+                <th className="py-2.5 px-3">ADMIN ACTION</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/10">
@@ -62,25 +69,39 @@ export function IncidentsPage() {
                       </span>
                     </td>
                     <td className="py-3 px-3">
-                      <span className="px-2 py-0.5 rounded text-[9px] badge-success">
+                      <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
+                        inc.status === 'ACTIVE' ? 'bg-red-950 text-red-300 border border-red-800' :
+                        inc.status === 'DISPATCHED' ? 'bg-amber-950 text-amber-300 border border-amber-800' :
+                        'bg-emerald-950 text-emerald-300 border border-emerald-800'
+                      }`}>
                         {inc.status}
                       </span>
                     </td>
                     <td className="py-3 px-3 max-w-[160px] truncate text-white/90">{inc.locationText}</td>
                     <td className="py-3 px-3 text-amber-300 font-bold">{inc.peopleAtRisk} victims</td>
-                    <td className="py-3 px-3 text-white font-bold">{inc.confidence}%</td>
-                    <td className="py-3 px-3 text-white/80">{inc.assignedResourceId || 'F01'}</td>
+                    <td className="py-3 px-3 text-white/80 font-bold">{inc.assignedResourceId || 'Unassigned'}</td>
                     <td className="py-3 px-3">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          selectIncident(inc.id);
-                          navigate(`/incidents/${inc.id}`);
-                        }}
-                        className="p-1.5 rounded bg-orange-500 hover:bg-orange-400 text-black font-bold transition-all"
-                      >
-                        <ArrowRight className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                        {user?.role === 'ADMIN' && inc.status !== 'RESOLVED' && (
+                          <button
+                            onClick={() => solveAndDispatchIncidentAction(inc.id)}
+                            title="Run AI Optimization & Dispatch nearest unit"
+                            className="px-2 py-1 rounded bg-amber-400 hover:bg-amber-300 text-black font-bold text-[10px] flex items-center gap-1 shadow"
+                          >
+                            <Zap className="w-3 h-3" />
+                            <span>Dispatch</span>
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            selectIncident(inc.id);
+                            navigate(`/incidents/${inc.id}`);
+                          }}
+                          className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-white font-bold transition-all"
+                        >
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -120,8 +141,8 @@ export function IncidentsPage() {
               <div className="text-lg font-bold text-orange-400">{selectedIncident.escalationRisk}%</div>
             </div>
             <div className="bg-black/60 p-2.5 rounded-lg border border-orange-500/40">
-              <div className="text-[9px] text-orange-200">AI CONFIDENCE</div>
-              <div className="text-lg font-bold text-white">{selectedIncident.confidence}%</div>
+              <div className="text-[9px] text-orange-200">STATUS</div>
+              <div className="text-sm font-bold text-emerald-400">{selectedIncident.status}</div>
             </div>
           </div>
 
@@ -130,10 +151,36 @@ export function IncidentsPage() {
             <div className="text-[11px] text-white leading-relaxed">{selectedIncident.rawText}</div>
           </div>
 
+          {/* Admin Direct Action Buttons */}
+          {user?.role === 'ADMIN' && (
+            <div className="space-y-2 pt-2 border-t border-orange-500/30">
+              <div className="text-[10px] text-amber-300 font-bold uppercase tracking-wider">
+                ADMIN DISPATCH & RESOLUTION ACTIONS
+              </div>
+              <button
+                onClick={() => solveAndDispatchIncidentAction(selectedIncident.id)}
+                className="w-full py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-black font-orbitron font-extrabold text-xs transition-all shadow-lg flex items-center justify-center gap-2"
+              >
+                <Zap className="w-4 h-4" />
+                <span>RUN OPTIMIZATION & DISPATCH UNIT</span>
+              </button>
+
+              {selectedIncident.status !== 'RESOLVED' && (
+                <button
+                  onClick={() => resolveIncidentAction(selectedIncident.id)}
+                  className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-orbitron font-bold text-xs transition-all shadow-lg flex items-center justify-center gap-2"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>MARK INCIDENT AS RESOLVED</span>
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Navigate to Dedicated Investigation Page */}
           <button
             onClick={() => navigate(`/incidents/${selectedIncident.id}`)}
-            className="w-full py-3.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-black font-orbitron font-bold text-xs tracking-wider transition-all flex items-center justify-center gap-2 shadow-xl mt-auto"
+            className="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs tracking-wider transition-all flex items-center justify-center gap-2 shadow-md mt-auto"
           >
             <span>OPEN DETAILED INVESTIGATION</span>
             <ArrowRight className="w-4 h-4" />

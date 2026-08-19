@@ -63,7 +63,7 @@ function SingleRiskZoneMarker({ zone, isSelected, onSelect }: ZoneProps) {
       </mesh>
 
       {/* Floating Holographic Risk Label */}
-      <Html position={[0, 4.5, 0]} center distanceFactor={28}>
+      <Html position={[0, 4.5, 0]} center distanceFactor={28} zIndexRange={[10, 0]}>
         <div
           onClick={(e) => {
             e.stopPropagation();

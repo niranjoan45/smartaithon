@@ -160,8 +160,11 @@ export class IncidentAnalyzer {
       priorityScore,
       priorityRank: 1,
       status: 'ACTIVE',
-      requiredServices: classification.type === 'FIRE' ? ['FIRE', 'AMBULANCE'] : ['AMBULANCE', 'POLICE'],
+      requiredServices: (classification.type === 'ACCIDENT' || classification.type === 'MEDICAL') ? ['AMBULANCE', 'POLICE'] : classification.type === 'FIRE' ? ['FIRE', 'AMBULANCE'] : ['AMBULANCE'],
+      assignedResourceId: (classification.type === 'ACCIDENT' || classification.type === 'MEDICAL') ? 'A17' : classification.type === 'FIRE' ? 'F01' : 'P09',
       evidence: initialEvidence,
+      mediaAttachments: input.mediaAttachments,
+      gpsLocation: input.gpsLocation,
       aiReasoning: {
         classificationReasoning: classification.reasoning,
         severityReasoning: severityRes.reasons,

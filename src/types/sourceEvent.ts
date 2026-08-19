@@ -13,6 +13,16 @@ export interface SourceEvent {
   confidence: number; // 0.0 - 1.0
   mediaType?: 'TEXT' | 'IMAGE_STREAM' | 'SENSOR_TELEMETRY' | 'SOCIAL_FEED';
   relatedIncidentId?: string;
+  mediaAttachments?: {
+    pictures?: string[];
+    videoUrl?: string;
+    audioUrl?: string;
+  };
+  gpsLocation?: {
+    latitude: number;
+    longitude: number;
+    accuracy?: number;
+  };
   metadata: {
     cameraId?: string;
     sensorId?: string;

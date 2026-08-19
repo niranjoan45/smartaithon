@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerformanceMonitor } from '@react-three/drei';
 import { RoadNetwork } from './RoadNetwork';
@@ -12,7 +12,8 @@ import { CameraController } from './CameraController';
 import { useCityStore } from '../../stores/useCityStore';
 
 export function CityScene() {
-  const { lowQualityMode, setLowQualityMode, selectIncident, selectResource } = useCityStore();
+  const { lowQualityMode, setLowQualityMode } = useCityStore();
+  const controlsRef = useRef<any>(null);
 
   return (
     <div className="w-full h-full absolute inset-0 bg-[#f8fafc]">
@@ -20,10 +21,6 @@ export function CityScene() {
         shadows={!lowQualityMode}
         camera={{ position: [0, 45, 55], fov: 45 }}
         gl={{ antialias: !lowQualityMode, alpha: false, powerPreference: 'high-performance' }}
-        onPointerMissed={() => {
-          selectIncident(null);
-          selectResource(null);
-        }}
       >
         {/* Dynamic Quality Performance Monitoring */}
         <PerformanceMonitor
@@ -48,11 +45,12 @@ export function CityScene() {
         <pointLight position={[0, 20, 0]} intensity={1.2} color="#dc2626" distance={60} />
         <pointLight position={[24, 15, 16]} intensity={1.2} color="#ef4444" distance={40} />
 
-        {/* 3D Camera Manager */}
-        <CameraController />
+        {/* 3D Camera Manager with Controls Reference */}
+        <CameraController controlsRef={controlsRef} />
 
-        {/* Smooth Orbit Controls */}
+        {/* Smooth Orbit Controls with ref binding */}
         <OrbitControls
+          ref={controlsRef}
           enableDamping
           dampingFactor={0.05}
           maxPolarAngle={Math.PI / 2 - 0.05}

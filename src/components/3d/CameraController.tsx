@@ -1,70 +1,82 @@
+import React, { useRef, useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { useCityStore } from '../../stores/useCityStore';
 
-export function CameraController() {
+interface CameraControllerProps {
+  controlsRef?: React.RefObject<any>;
+}
+
+export function CameraController({ controlsRef }: CameraControllerProps) {
   const { camera } = useThree();
   const { cameraMode, cameraTarget } = useCityStore();
 
   const targetLookAt = useRef(new THREE.Vector3(0, 0, 0));
-  const targetCamPos = useRef(new THREE.Vector3(0, 45, 60));
+  const targetCamPos = useRef(new THREE.Vector3(0, 45, 55));
+  const isTransitioning = useRef(false);
 
   useEffect(() => {
     const [tx, ty, tz] = cameraTarget;
 
     switch (cameraMode) {
-      case 'CITY_OVERVIEW':
-        targetCamPos.current.set(0, 45, 55);
-        targetLookAt.current.set(0, 0, 0);
-        break;
       case 'INCIDENT_FOCUS':
-        targetCamPos.current.set(tx + 12, ty + 15, tz + 18);
+        // Angle camera to focus directly on accident site
+        targetCamPos.current.set(tx + 8, ty + 15, tz + 16);
         targetLookAt.current.set(tx, ty, tz);
+        isTransitioning.current = true;
         break;
       case 'RESOURCE_FOCUS':
-        targetCamPos.current.set(tx - 8, ty + 10, tz + 12);
+        targetCamPos.current.set(tx - 8, ty + 12, tz + 14);
         targetLookAt.current.set(tx, ty, tz);
+        isTransitioning.current = true;
         break;
       case 'DISPATCH_VIEW':
         targetCamPos.current.set(0, 35, 40);
         targetLookAt.current.set(0, 0, 0);
+        isTransitioning.current = true;
         break;
       case 'RISK_VIEW':
-        targetCamPos.current.set(0, 65, 10);
+        targetCamPos.current.set(0, 60, 15);
         targetLookAt.current.set(0, 0, 0);
+        isTransitioning.current = true;
         break;
+      case 'CITY_OVERVIEW':
       case 'COMMAND_VIEW':
       default:
-        targetCamPos.current.set(0, 40, 50);
+        targetCamPos.current.set(0, 45, 55);
         targetLookAt.current.set(0, 0, 0);
+        isTransitioning.current = true;
         break;
     }
   }, [cameraMode, cameraTarget]);
 
-  useFrame((state, delta) => {
-    // Smooth Lerp transitions without sudden teleports
-    const lerpSpeed = THREE.MathUtils.clamp(delta * 2.5, 0.01, 0.1);
-    camera.position.lerp(targetCamPos.current, lerpSpeed);
+  useFrame((_, delta) => {
+    if (!isTransitioning.current) return;
 
-    // Current camera lookAt lerp
-    const currentLookAt = new THREE.Vector3();
-    camera.getWorldDirection(currentLookAt);
-    const targetDir = new THREE.Vector3()
-      .subVectors(targetLookAt.current, camera.position)
-      .normalize();
+    const lerpFactor = THREE.MathUtils.clamp(delta * 3.5, 0.01, 0.2);
 
-    // Subtle continuous environmental camera sway for cinematic feel
-    const time = state.clock.getElapsedTime();
-    if (cameraMode === 'CITY_OVERVIEW' || cameraMode === 'COMMAND_VIEW') {
-      targetCamPos.current.x += Math.sin(time * 0.2) * 0.02;
+    // Smoothly lerp camera position to accident location
+    camera.position.lerp(targetCamPos.current, lerpFactor);
+
+    // Lock OrbitControls target to accident site so it never jumps back to center
+    if (controlsRef?.current) {
+      controlsRef.current.target.lerp(targetLookAt.current, lerpFactor);
+      controlsRef.current.update();
+    } else {
+      camera.lookAt(targetLookAt.current);
     }
 
-    camera.lookAt(
-      THREE.MathUtils.lerp(camera.position.x + currentLookAt.x * 20, targetLookAt.current.x, lerpSpeed),
-      THREE.MathUtils.lerp(camera.position.y + currentLookAt.y * 20, targetLookAt.current.y, lerpSpeed),
-      THREE.MathUtils.lerp(camera.position.z + currentLookAt.z * 20, targetLookAt.current.z, lerpSpeed)
-    );
+    // Stop lerp transition when close enough, keeping controls target fixed at accident location
+    if (camera.position.distanceTo(targetCamPos.current) < 0.2) {
+      camera.position.copy(targetCamPos.current);
+      if (controlsRef?.current) {
+        controlsRef.current.target.copy(targetLookAt.current);
+        controlsRef.current.update();
+      } else {
+        camera.lookAt(targetLookAt.current);
+      }
+      isTransitioning.current = false;
+    }
   });
 
   return null;

@@ -47,7 +47,7 @@ export async function seedDatabase() {
       ON CONFLICT (incident_code) DO NOTHING;
     `, [
       'INC-1051', 'FIRE', 'P1', 94, 96, 1, 'ACTIVE',
-      'Thermal detector array anomaly & Citizen 911 report: Rapid fire escalation at Sector 4 Innovation Tower commercial building.',
+      'Thermal detector array anomaly & Citizen report: Rapid fire escalation at Sector 4 Innovation Tower commercial building.',
       'Sector 4 Innovation Tower', 19.082, 72.888, 24, 0.5, 16, 14, 1680, 89, 'P1', 98, 0.98, false, ['CITIZEN', 'CCTV', 'IOT', 'SOCIAL'], 'F01'
     ]);
 

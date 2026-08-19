@@ -59,19 +59,21 @@ export class IncidentFusionEngine {
     let bestCorrelationBreakdown = { spatialScore: 0, temporalScore: 0, semanticScore: 0 };
     let eventConflictDetected = false;
 
-    // Evaluate correlation against existing active incidents
-    for (const inc of existingIncidents) {
-      const corr = evaluateEventCorrelation(event, inc);
-      if (corr.isMatch && corr.correlationScore > highestCorrScore) {
-        highestCorrScore = corr.correlationScore;
-        matchedIncident = inc;
-        bestCorrelationBreakdown = {
-          spatialScore: corr.spatialScore,
-          temporalScore: corr.temporalScore,
-          semanticScore: corr.semanticScore
-        };
-        if (corr.isConflict) {
-          eventConflictDetected = true;
+    // Evaluate correlation against existing active incidents (keep Citizen reports as distinct incidents)
+    if (event.sourceType !== 'CITIZEN') {
+      for (const inc of existingIncidents) {
+        const corr = evaluateEventCorrelation(event, inc);
+        if (corr.isMatch && corr.correlationScore > highestCorrScore) {
+          highestCorrScore = corr.correlationScore;
+          matchedIncident = inc;
+          bestCorrelationBreakdown = {
+            spatialScore: corr.spatialScore,
+            temporalScore: corr.temporalScore,
+            semanticScore: corr.semanticScore
+          };
+          if (corr.isConflict) {
+            eventConflictDetected = true;
+          }
         }
       }
     }
@@ -117,6 +119,8 @@ export class IncidentFusionEngine {
         ...matchedIncident,
         rawText: fusedText,
         sourceEvents: updatedEvents,
+        mediaAttachments: event.mediaAttachments || matchedIncident.mediaAttachments,
+        gpsLocation: event.gpsLocation || matchedIncident.gpsLocation,
         correlatedReportsCount,
         confidence: confidencePercent,
         fusionConfidence: newConfidence,
@@ -192,8 +196,11 @@ export class IncidentFusionEngine {
         priorityScore,
         priorityRank: existingIncidents.length + 1,
         status: 'ACTIVE',
-        requiredServices: cls.type === 'FIRE' ? ['FIRE', 'AMBULANCE'] : cls.type === 'ACCIDENT' ? ['AMBULANCE', 'POLICE'] : ['AMBULANCE'],
+        requiredServices: (cls.type === 'ACCIDENT' || cls.type === 'MEDICAL') ? ['AMBULANCE', 'POLICE'] : cls.type === 'FIRE' ? ['FIRE', 'AMBULANCE'] : ['AMBULANCE'],
+        assignedResourceId: (cls.type === 'ACCIDENT' || cls.type === 'MEDICAL') ? 'A17' : cls.type === 'FIRE' ? 'F01' : 'P09',
         evidence: [{ id: `E-${Date.now()}`, source: (event.sourceType === 'CITIZEN' ? 'CITIZEN_REPORT' : event.sourceType === 'CCTV' ? 'CCTV_STREAM' : event.sourceType === 'IOT' ? 'IOT_SENSOR' : 'SOCIAL_SIGNAL') as any, title: `${event.sourceType} Signal`, confidence: confidencePercent, timestamp: timestampStr }],
+        mediaAttachments: event.mediaAttachments,
+        gpsLocation: event.gpsLocation,
         sourceEvents: [event],
         correlatedReportsCount: 1,
         correlationBreakdown: { spatialScore: 1.0, temporalScore: 1.0, semanticScore: 1.0 },

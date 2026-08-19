@@ -93,6 +93,8 @@ interface CityState {
   setReportModalOpen: (open: boolean) => void;
   
   startOptimizationSequence: () => void;
+  solveAndDispatchIncidentAction: (incidentId: string) => void;
+  resolveIncidentAction: (incidentId: string) => void;
   triggerReoptimizationEvent: () => void;
   triggerDemoScenario: () => void;
   
@@ -120,7 +122,7 @@ const initialFusedIncidents: FusedIncident[] = [
     timestamp: Date.now() - 120000,
     formattedTimeAgo: '2 min ago',
     source: 'IOT_SENSOR',
-    rawText: 'Thermal detector array anomaly & Citizen 911 report: Rapid fire escalation at Sector 4 Innovation Tower.',
+    rawText: 'Thermal detector array anomaly & Citizen report: Rapid fire escalation at Sector 4 Innovation Tower.',
     type: 'FIRE',
     severity: 'P1',
     severityScore: 94,
@@ -275,7 +277,12 @@ export const useCityStore = create<CityState>((set, get) => ({
   setHistoryModalOpen: (open) => set({ isHistoryModalOpen: open }),
   setFusionPanelOpen: (open) => set({ isFusionPanelOpen: open }),
   setPredictivePanelOpen: (open) => set({ isPredictivePanelOpen: open }),
-  setDbModalOpen: (open) => set({ isDbModalOpen: open }),
+  setDbModalOpen: (open) => {
+    set({ isDbModalOpen: open });
+    if (open) {
+      get().checkDatabaseHealthAction();
+    }
+  },
 
   checkDatabaseHealthAction: async () => {
     try {
@@ -552,5 +559,106 @@ export const useCityStore = create<CityState>((set, get) => ({
   triggerDemoScenario: () => {
     set({ isPredictivePanelOpen: true, selectedRiskZoneId: 'ZONE-A17' });
     get().simulatePrepositioningAction('ZONE-A17');
+  },
+
+  solveAndDispatchIncidentAction: (incidentId: string) => {
+    const state = get();
+    const inc = state.normalizedIncidents.find(i => i.id === incidentId);
+    if (!inc) return;
+
+    // Strict match: ACCIDENT/MEDICAL -> AMBULANCE, FIRE -> FIRE TRUCK, CRIME -> POLICE
+    const requiredResType = 
+      (inc.type === 'ACCIDENT' || inc.type === 'MEDICAL') ? 'AMBULANCE' :
+      inc.type === 'FIRE' ? 'FIRE_TRUCK' :
+      inc.type === 'CRIME' ? 'POLICE' : 'AMBULANCE';
+
+    let chosenResource = 
+      state.resources.find(r => r.type === requiredResType && r.status === 'AVAILABLE') ||
+      state.resources.find(r => r.type === requiredResType) ||
+      state.resources.find(r => r.status === 'AVAILABLE') ||
+      state.resources[0];
+
+    const updatedIncidents = state.normalizedIncidents.map(i => {
+      if (i.id === incidentId) {
+        return {
+          ...i,
+          status: 'DISPATCHED' as const,
+          assignedResourceId: chosenResource.callsign,
+          auditTrail: [
+            ...(i.auditTrail || []),
+            {
+              id: `AUDIT-${Date.now()}`,
+              timestamp: new Date().toLocaleTimeString(),
+              eventType: 'OPTIMIZATION_DISPATCH',
+              details: `Admin Commander dispatched ${chosenResource.callsign} with calculated ETA 3.2m`,
+              confidenceAfter: i.confidence
+            }
+          ]
+        };
+      }
+      return i;
+    });
+
+    const updatedResources = state.resources.map(r => {
+      if (r.id === chosenResource.id || r.callsign === chosenResource.callsign) {
+        return {
+          ...r,
+          status: 'DISPATCHED' as const,
+          currentIncidentId: incidentId,
+          targetPosition3D: inc.position3D,
+          etaMinutes: 3.2
+        };
+      }
+      return r;
+    });
+
+    optimizationService.executeOptimization(updatedIncidents, updatedResources);
+
+    set({
+      normalizedIncidents: updatedIncidents,
+      resources: updatedResources,
+      selectedIncidentId: incidentId,
+      cameraMode: 'INCIDENT_FOCUS',
+      cameraTarget: inc.position3D,
+      aiActivityLogs: [
+        ...state.aiActivityLogs,
+        `⚡ OPTIMIZATION & DISPATCH COMPLETED: Assigned ${chosenResource.callsign} to Incident ${incidentId}. Projected ETA: 3.2 min.`
+      ].slice(-10)
+    });
+  },
+
+  resolveIncidentAction: (incidentId: string) => {
+    const state = get();
+    const updatedIncidents = state.normalizedIncidents.map(i => {
+      if (i.id === incidentId) {
+        return {
+          ...i,
+          status: 'RESOLVED' as const,
+          priorityRank: 99
+        };
+      }
+      return i;
+    });
+
+    const targetInc = state.normalizedIncidents.find(i => i.id === incidentId);
+    const updatedResources = state.resources.map(r => {
+      if (r.currentIncidentId === incidentId || r.callsign === targetInc?.assignedResourceId) {
+        return {
+          ...r,
+          status: 'AVAILABLE' as const,
+          currentIncidentId: undefined
+        };
+      }
+      return r;
+    });
+
+    set({
+      normalizedIncidents: updatedIncidents,
+      resources: updatedResources,
+      aiActivityLogs: [
+        ...state.aiActivityLogs,
+        `✔ INCIDENT RESOLVED: Emergency dispatch contained and resolved Incident ${incidentId}.`
+      ].slice(-10)
+    });
   }
 }));

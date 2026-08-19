@@ -23,7 +23,7 @@ export function getMajorFireDemoScenario(): DemoScenarioStep[] {
         confidence: 0.75,
         metadata: { peopleAtRiskCount: 8 }
       }),
-      stepDescription: 'T+00s: Initial Citizen 911 report ingested. Fused Incident INC-1051 created (P2 Moderate Confidence).'
+      stepDescription: 'T+00s: Initial Citizen report ingested. Fused Incident INC-1051 created (P2 Moderate Confidence).'
     },
     {
       timeLabel: 'T+05s',

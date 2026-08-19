@@ -16,42 +16,38 @@ export function evaluateCapabilityMatch(
   const matchReasons: string[] = [];
   const mismatchPenalties: string[] = [];
 
-  // Service Type Match
-  const requiredType = 
+  // Required primary service type matching
+  const requiredType: ResourceType = 
     incident.type === 'FIRE' ? 'FIRE_TRUCK' :
-    incident.type === 'ACCIDENT' ? 'AMBULANCE' :
-    incident.type === 'MEDICAL' ? 'AMBULANCE' :
+    (incident.type === 'ACCIDENT' || incident.type === 'MEDICAL') ? 'AMBULANCE' :
     incident.type === 'CRIME' ? 'POLICE' : 'AMBULANCE';
 
   if (resource.type === requiredType) {
-    score += 35;
-    matchReasons.push(`Primary service type match (${resource.type})`);
-  } else if (incident.type === 'ACCIDENT' && resource.type === 'FIRE_TRUCK') {
-    score += 15;
-    matchReasons.push(`Secondary rescue support unit (${resource.type})`);
+    score += 45;
+    matchReasons.push(`Primary required service match (${resource.type} for ${incident.type})`);
   } else {
-    score -= 40;
-    mismatchPenalties.push(`Service type mismatch (${resource.type} assigned to ${incident.type})`);
+    score -= 60;
+    mismatchPenalties.push(`Service mismatch: ${resource.type} requested for ${incident.type}`);
   }
 
   // Capability Verification
-  if (incident.severity === 'P1' && resource.capabilities.includes('advancedLifeSupport')) {
+  if ((incident.type === 'ACCIDENT' || incident.type === 'MEDICAL') && resource.type === 'AMBULANCE') {
     score += 20;
-    matchReasons.push('Advanced Life Support (ALS) trauma capability verified');
+    matchReasons.push('Trauma & Emergency Life Support capability verified');
   }
 
-  if (incident.type === 'FIRE' && resource.capabilities.includes('structuralFire')) {
+  if (incident.type === 'FIRE' && resource.type === 'FIRE_TRUCK') {
     score += 20;
-    matchReasons.push('Heavy structural fire suppression unit verified');
+    matchReasons.push('Structural fire suppression capability verified');
   }
 
-  if (incident.type === 'CRIME' && resource.capabilities.includes('crimeResponse')) {
-    score += 15;
-    matchReasons.push('Tactical crime response unit verified');
+  if (incident.type === 'CRIME' && resource.type === 'POLICE') {
+    score += 20;
+    matchReasons.push('Tactical crime response capability verified');
   }
 
   const finalScore = Math.min(100, Math.max(0, score));
-  const isCompatible = finalScore >= 35;
+  const isCompatible = finalScore >= 40;
 
   return {
     score: finalScore,

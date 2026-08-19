@@ -129,7 +129,7 @@ function SingleIncidentMarker({ incident, isSelected, onSelect }: MarkerProps) {
         position={[0, 3.2, 0]}
         center
         distanceFactor={28}
-        zIndexRange={[100, 0]}
+        zIndexRange={[10, 0]}
       >
         <div
           onClick={(e) => {

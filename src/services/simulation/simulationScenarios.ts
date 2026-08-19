@@ -17,7 +17,7 @@ export function createSimulationScenarios(): ScenarioDefinition[] {
       name: 'HIGHWAY MULTI-VEHICLE ACCIDENT',
       description: 'Vehicle collision on North Interchange causes traffic congestion and emergency dispatch escalation.',
       timelineSteps: [
-        { elapsedSec: 2, title: 'Accident Signal Ingested', description: 'Citizen 911 report received: Vehicle collision on North Highway Interchange.', action: () => {} },
+        { elapsedSec: 2, title: 'Accident Signal Ingested', description: 'Citizen report received: Vehicle collision on North Highway Interchange.', action: () => {} },
         { elapsedSec: 8, title: 'CCTV Stream Corroborated', description: 'CCTV Cam #14 confirms rollover crash and lane blockage.', action: () => {} },
         { elapsedSec: 15, title: 'Traffic Congestion Rises', description: 'Traffic sector SEC-02 speed multiplier drops to 0.40 SEVERE.', action: () => {} },
         { elapsedSec: 25, title: 'Ambulance Dispatched', description: 'Ambulance A17 dispatched with trauma capabilities.', action: () => {} }

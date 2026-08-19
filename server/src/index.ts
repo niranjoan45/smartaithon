@@ -45,6 +45,10 @@ app.post('/api/audit', createAuditEvent);
 
 app.post('/api/citizen-reports', submitCitizenReport);
 
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // Robust dist directory resolution for Render / Production
 const possibleDistPaths = [
   path.resolve(__dirname, '../../dist'),

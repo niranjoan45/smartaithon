@@ -13,19 +13,30 @@ export class LocalSimulationProvider implements AIProvider {
   async classifyIncident(rawText: string): Promise<AIClassificationResult> {
     const text = rawText.toLowerCase();
 
+    // Check Road Accident & Collision Keywords First
+    if (
+      text.includes('accident') || 
+      text.includes('crash') || 
+      text.includes('collision') || 
+      text.includes('vehicle') || 
+      text.includes('car') || 
+      text.includes('road') || 
+      text.includes('rollover') || 
+      text.includes('hit') || 
+      text.includes('auto')
+    ) {
+      return {
+        type: 'ACCIDENT',
+        confidence: 96,
+        reasoning: 'Road accident impact vector and vehicle collision keywords recognized.'
+      };
+    }
+
     if (text.includes('fire') || text.includes('smoke') || text.includes('explosion') || text.includes('flame') || text.includes('burn')) {
       return {
         type: 'FIRE',
         confidence: 96,
         reasoning: 'High-thermal indicators and smoke keywords detected in report text.'
-      };
-    }
-
-    if (text.includes('accident') || text.includes('crash') || text.includes('collision') || text.includes('vehicle') || text.includes('rollover')) {
-      return {
-        type: 'ACCIDENT',
-        confidence: 94,
-        reasoning: 'Impact keywords and traffic collision pattern recognized.'
       };
     }
 
@@ -37,7 +48,7 @@ export class LocalSimulationProvider implements AIProvider {
       };
     }
 
-    if (text.includes('cardiac') || text.includes('collapse') || text.includes('unconscious') || text.includes('heart') || text.includes('stroke')) {
+    if (text.includes('cardiac') || text.includes('collapse') || text.includes('unconscious') || text.includes('heart') || text.includes('stroke') || text.includes('medical') || text.includes('injured')) {
       return {
         type: 'MEDICAL',
         confidence: 95,
@@ -62,9 +73,9 @@ export class LocalSimulationProvider implements AIProvider {
     }
 
     return {
-      type: 'OTHER',
-      confidence: 75,
-      reasoning: 'General alert classified under fallback smart city monitoring.'
+      type: 'ACCIDENT',
+      confidence: 85,
+      reasoning: 'Emergency citizen alert classified under road safety monitoring.'
     };
   }
 
@@ -116,7 +127,7 @@ export class LocalSimulationProvider implements AIProvider {
       };
     }
 
-    // Default procedural fallback for unknown/custom reports
+    // Default procedural fallback for custom reports
     const randomX = Number(((Math.random() - 0.5) * 45).toFixed(1));
     const randomZ = Number(((Math.random() - 0.5) * 45).toFixed(1));
 
@@ -135,26 +146,24 @@ export class LocalSimulationProvider implements AIProvider {
     peopleAtRisk: number
   ): Promise<AISeverityResult> {
     const text = rawText.toLowerCase();
-    let score = 30; // base score
-    const breakdown = [{ factor: 'Base Incident Assessment', points: 30 }];
+    let score = 35;
+    const breakdown = [{ factor: 'Base Incident Assessment', points: 35 }];
     const reasons: string[] = [];
 
-    // Type Severity Factor
-    if (type === 'FIRE') {
+    if (type === 'ACCIDENT') {
+      score += 25;
+      breakdown.push({ factor: 'Road Collision Threat', points: 25 });
+      reasons.push('High-speed vehicle impact vector requiring Ambulance dispatch');
+    } else if (type === 'FIRE') {
       score += 25;
       breakdown.push({ factor: 'Thermal Fire Threat', points: 25 });
       reasons.push('Active thermal fire combustion indicators');
-    } else if (type === 'ACCIDENT') {
-      score += 20;
-      breakdown.push({ factor: 'Traffic Crash Collision', points: 20 });
-      reasons.push('High-speed vehicle impact vector');
     } else if (type === 'FLOOD') {
       score += 18;
       breakdown.push({ factor: 'Submersion Hazard', points: 18 });
       reasons.push('Rising flood level telemetry');
     }
 
-    // Casualties / People at risk
     if (peopleAtRisk >= 5) {
       score += 25;
       breakdown.push({ factor: 'Multiple Persons at Risk (≥5)', points: 25 });
@@ -165,7 +174,6 @@ export class LocalSimulationProvider implements AIProvider {
       reasons.push('Human casualties identified');
     }
 
-    // Corroboration Count
     if (evidenceCount >= 3) {
       score += 15;
       breakdown.push({ factor: '3+ Corroborating Sources', points: 15 });
@@ -176,11 +184,10 @@ export class LocalSimulationProvider implements AIProvider {
       reasons.push('Dual source verification');
     }
 
-    // Keyword Intensifiers
     if (text.includes('critical') || text.includes('trapped') || text.includes('explosion') || text.includes('severe')) {
       score += 10;
       breakdown.push({ factor: 'Severe Keyword Indicators', points: 10 });
-      reasons.push('Critical entrapment or explosion signals');
+      reasons.push('Critical entrapment or crash signals');
     }
 
     const finalScore = Math.min(100, Math.max(10, score));
@@ -208,7 +215,7 @@ export class LocalSimulationProvider implements AIProvider {
       people = 14;
     }
 
-    const area = people * 120; // 120 sq m per person estimated affected zone
+    const area = people * 120;
 
     return {
       peopleAtRisk: people,

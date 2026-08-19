@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export interface HealthCheckResponse {
   status: 'HEALTHY' | 'DEGRADED';
@@ -10,7 +10,7 @@ export interface HealthCheckResponse {
 
 export async function checkBackendHealth(): Promise<HealthCheckResponse> {
   try {
-    const res = await fetch(`${BASE_URL}/health`, { signal: AbortSignal.timeout(2000) });
+    const res = await fetch(`${BASE_URL}/health`, { signal: AbortSignal.timeout(3000) });
     if (!res.ok) throw new Error('Backend HTTP degraded');
     return await res.json();
   } catch (error) {

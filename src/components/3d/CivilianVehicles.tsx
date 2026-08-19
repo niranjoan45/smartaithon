@@ -1,23 +1,45 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
 export function CivilianVehicles() {
-  const count = 16;
+  const count = 24;
   const instancedMeshRef = useRef<THREE.InstancedMesh>(null);
   const tempObject = new THREE.Object3D();
+  const tempColor = new THREE.Color();
 
-  // Initial random positions along major roads
+  // Vibrant RED and YELLOW car colors
+  const carColors = [
+    '#ef4444', // Red
+    '#eab308', // Yellow
+    '#dc2626', // Deep Red
+    '#facc15', // Bright Yellow
+    '#b91c1c', // Dark Crimson Red
+    '#fbbf24'  // Amber Yellow
+  ];
+
+  // Initial random positions along major black roads
   const cars = useRef(
     Array.from({ length: count }, (_, i) => ({
       axis: i % 2 === 0 ? ('X' as const) : ('Z' as const),
-      coord: (i % 2 === 0 ? (i - 8) * 10 : (i - 8) * 10),
-      offset: (i % 2 === 0 ? (i % 4 - 2) * 2.5 : (i % 4 - 2) * 2.5),
-      speed: 0.12 + Math.random() * 0.08,
-      pos: (Math.random() - 0.5) * 100,
-      color: ['#64748b', '#475569', '#94a3b8', '#6b7280'][i % 4]
+      coord: (i % 2 === 0 ? (i - 12) * 8 : (i - 12) * 8),
+      offset: (i % 2 === 0 ? ((i % 4) - 1.5) * 2.5 : ((i % 4) - 1.5) * 2.5),
+      speed: 0.14 + Math.random() * 0.1,
+      pos: (Math.random() - 0.5) * 120,
+      colorHex: carColors[i % carColors.length]
     }))
   );
+
+  useEffect(() => {
+    if (!instancedMeshRef.current) return;
+    cars.current.forEach((car, i) => {
+      tempColor.set(car.colorHex);
+      instancedMeshRef.current?.setColorAt(i, tempColor);
+    });
+    if (instancedMeshRef.current.instanceColor) {
+      instancedMeshRef.current.instanceColor.needsUpdate = true;
+    }
+  }, []);
 
   useFrame((_, delta) => {
     if (!instancedMeshRef.current) return;
@@ -34,7 +56,7 @@ export function CivilianVehicles() {
         tempObject.rotation.set(0, Math.PI / 2, 0);
       }
 
-      tempObject.scale.set(1.4, 0.6, 0.8);
+      tempObject.scale.set(1.6, 0.7, 0.9);
       tempObject.updateMatrix();
       instancedMeshRef.current?.setMatrixAt(i, tempObject.matrix);
     });
@@ -49,7 +71,7 @@ export function CivilianVehicles() {
       castShadow
     >
       <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color="#64748b" roughness={0.3} metalness={0.6} />
+      <meshStandardMaterial roughness={0.2} metalness={0.7} />
     </instancedMesh>
   );
 }
